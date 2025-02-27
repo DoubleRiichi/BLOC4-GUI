@@ -1,0 +1,29 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:viewModels="clr-namespace:Bloc4_GUI.ViewModels" 
+             x:DataType="viewModels:ServiceViewModel"
+             x:Class="Bloc4_GUI.Views.ServiceView">
+             
+    <StackPanel Spacing="20">
+                    
+            <DataGrid 
+        ItemsSource="{Binding Services}" 
+        AutoGenerateColumns="False" 
+        IsReadOnly="True" 
+        GridLinesVisibility="All" 
+        BorderThickness="1" 
+        BorderBrush="Gray"
+        VerticalAlignment="Center"
+        HorizontalAlignment="Center">
+        
+        <DataGrid.Columns>
+
+
+            <DataGridTextColumn Header="Nom"             Binding="{Binding nom}"/>
+            <DataGridTextColumn Header="Site"                Binding="{Binding site.nom}"/>
+
+        </DataGrid.Columns>
+
+    </DataGrid>
+    </StackPanel>
+</UserControl>

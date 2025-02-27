@@ -1,0 +1,72 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:viewModels="clr-namespace:Bloc4_GUI.ViewModels" 
+             x:DataType="viewModels:SalarieViewModel"
+             x:Class="Bloc4_GUI.Views.SalarieView">
+             
+        <StackPanel  Spacing="20">
+        
+            <StackPanel  Margin="5,5"
+            Orientation="Horizontal" Spacing="12"
+            HorizontalAlignment="Center">
+                  <TextBox Width="100" Text="{Binding InputNom, Mode=TwoWay}" Watermark="Nom" AcceptsReturn="False"/>
+                  <TextBox Width="100" Text="{Binding InputPrenom, Mode=TwoWay}" Watermark="Prénom" AcceptsReturn="False"/>
+                  <TextBox Width="100" Text="{Binding InputPhoneFixe, Mode=TwoWay}"  Watermark="Téléphone Fixe" AcceptsReturn="False"/>
+                  <TextBox Width="100" Text="{Binding InputPhoneMobile, Mode=TwoWay}" Watermark="Téléphone Mobile" AcceptsReturn="False"/>
+                  <TextBox Width="130" Text="{Binding InputEmail, Mode=TwoWay}" Watermark="Email" AcceptsReturn="False"/>
+
+
+
+                  <ComboBox SelectedItem="{Binding SelectedService}" SelectedIndex="0" ItemsSource="{Binding ServicesDropdown}"/>                    
+                  <ComboBox SelectedItem="{Binding SelectedSite}" SelectedIndex="0" ItemsSource="{Binding SitesDropdown}"/>
+                  <Button Content="Filtrer" Command="{Binding FilterCommand}" />
+                  <Button Content="Réinitialiser" Command="{Binding ResetFilterCommand}" />
+
+            </StackPanel>
+
+        <ScrollViewer>
+                <DataGrid 
+            ItemsSource="{Binding Salaries}" 
+            AutoGenerateColumns="False" 
+            IsReadOnly="False" 
+            GridLinesVisibility="All" 
+            BorderThickness="1" 
+            BorderBrush="Gray"
+            VerticalAlignment="Center"
+            HorizontalAlignment="Center">
+            
+            <DataGrid.Columns>
+
+                <DataGridTextColumn Header="Nom"                 Binding="{Binding nom}"/>
+                <DataGridTextColumn Header="Prénom"              Binding="{Binding prenom}"/>
+                <DataGridTextColumn Header="Téléphone Fixe"      Binding="{Binding telephone_fixe}"/>
+                <DataGridTextColumn Header="Téléphone Portable"  Binding="{Binding telephone_mobile}"/>
+                <DataGridTextColumn Header="Email"               Binding="{Binding email}"/>
+                <!-- <DataGridTextColumn Header="Service"             Binding="{Binding service.nom}"/> -->
+                <DataGridTemplateColumn Header="Service">
+                                       <!-- Display Template (when not in editing mode) -->
+                    <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding service.nom}" />
+                            </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                    <DataGridTemplateColumn.CellEditingTemplate>
+                        <DataTemplate >
+                                <ComboBox SelectedItem="{Binding service.nom}" 
+                                SelectedIndex="0" 
+                                ItemsSource="{Binding RelativeSource={RelativeSource AncestorType={x:Type UserControl}}}, Path=DataContext.ServicesDropdown" />           
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellEditingTemplate>
+                </DataGridTemplateColumn>
+
+                <DataGridTextColumn Header="Site"                Binding="{Binding service.site.nom}"/>
+
+            </DataGrid.Columns>
+
+        </DataGrid>
+    </ScrollViewer>
+    
+
+
+        </StackPanel>
+</UserControl>
