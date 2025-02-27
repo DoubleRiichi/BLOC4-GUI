@@ -17,7 +17,7 @@
 
 
 
-                  <ComboBox SelectedItem="{Binding SelectedService}" SelectedIndex="0" ItemsSource="{Binding ServicesDropdown}"/>                    
+                  <ComboBox Name="comboServices" SelectedItem="{Binding SelectedService}" SelectedIndex="0" ItemsSource="{Binding ServicesDropdown}"/>                    
                   <ComboBox SelectedItem="{Binding SelectedSite}" SelectedIndex="0" ItemsSource="{Binding SitesDropdown}"/>
                   <Button Content="Filtrer" Command="{Binding FilterCommand}" />
                   <Button Content="Réinitialiser" Command="{Binding ResetFilterCommand}" />
@@ -54,7 +54,7 @@
                         <DataTemplate >
                                 <ComboBox SelectedItem="{Binding service.nom}" 
                                 SelectedIndex="0" 
-                                ItemsSource="{Binding RelativeSource={RelativeSource AncestorType={x:Type UserControl}}}, Path=DataContext.ServicesDropdown" />           
+                                ItemsSource="{Binding #comboServices.Items}" />           
                         </DataTemplate>
                     </DataGridTemplateColumn.CellEditingTemplate>
                 </DataGridTemplateColumn>
