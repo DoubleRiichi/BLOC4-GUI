@@ -1,6 +1,12 @@
+using ReactiveUI;
+
 namespace Bloc4_GUI.Models;
 
 
-public class ModelBase {
+public class ModelBase : ReactiveObject {
+
+
+
+
 
 }

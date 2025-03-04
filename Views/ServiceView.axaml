@@ -5,25 +5,84 @@
              x:Class="Bloc4_GUI.Views.ServiceView">
              
     <StackPanel Spacing="20">
-                    
-            <DataGrid 
-        ItemsSource="{Binding Services}" 
-        AutoGenerateColumns="False" 
-        IsReadOnly="True" 
-        GridLinesVisibility="All" 
-        BorderThickness="1" 
-        BorderBrush="Gray"
-        VerticalAlignment="Center"
-        HorizontalAlignment="Center">
-        
-        <DataGrid.Columns>
+        <StackPanel Margin="5,5"
+                    Orientation="Horizontal" Spacing="12"
+                    HorizontalAlignment="Center">
+            <ComboBox Name="comboServices" SelectedItem="{Binding SelectedService}" SelectedIndex="0" ItemsSource="{Binding ServicesDropdown}"/>                    
+            <ComboBox Name="comboSites" SelectedItem="{Binding SelectedSite}" SelectedIndex="0" ItemsSource="{Binding SitesDropdown}"/>
 
+            <Button Content="Filtrer" Command="{Binding FilterCommand}" />
+            <Button Content="Réinitialiser" Command="{Binding ResetFilterCommand}" />
+        </StackPanel>
 
-            <DataGridTextColumn Header="Nom"             Binding="{Binding nom}"/>
-            <DataGridTextColumn Header="Site"                Binding="{Binding site.nom}"/>
+        <StackPanel Margin="5,5"
+                    Orientation="Horizontal" Spacing="12"
+                    HorizontalAlignment="Center">
+            <Button Content="Confirmer" Command="{Binding ConfirmChangesCommand}"/>
+            <Button Content="Annuler"   Command="{Binding CancelChangesCommand}"/>
+        </StackPanel>
 
-        </DataGrid.Columns>
+        <StackPanel Margin="5,5"
+                    Orientation="Horizontal" Spacing="12"
+                    HorizontalAlignment="Center">
+            <Button Content="←"
+                    Command="{Binding GoToPreviousPageCommand}"
+                    IsEnabled="{Binding CanGoToPreviousPage}"/>
+            <ComboBox
+                SelectedItem="{Binding PageSelector, Mode=TwoWay}" SelectedIndex="0" ItemsSource="{Binding PagesIndex}"/>
 
+            <Button Content="→"
+                    Command="{Binding GoToNextPageCommand}"
+                    IsEnabled="{Binding CanGoToNextPage}"/>
+        </StackPanel>
+
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <DataGrid 
+            ItemsSource="{Binding Services}" 
+            AutoGenerateColumns="False" 
+            IsReadOnly="False" 
+            GridLinesVisibility="All" 
+            BorderThickness="1" 
+            BorderBrush="Gray"
+            VerticalAlignment="Center"
+            HorizontalAlignment="Center"
+            Name="ServicesGrid">
+            
+            <DataGrid.Columns>
+
+                    <DataGridTemplateColumn Header="Service">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding nom}" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                        <DataGridTemplateColumn.CellEditingTemplate>
+                            <DataTemplate>
+                                <ComboBox SelectedItem="{Binding nom}" 
+                                          SelectedIndex="0" 
+                                          ItemsSource="{Binding #comboServices.Items}" />           
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellEditingTemplate>
+                    </DataGridTemplateColumn>
+
+                    <DataGridTemplateColumn Header="Site">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding site.nom}" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                        <DataGridTemplateColumn.CellEditingTemplate>
+                            <DataTemplate>
+                                <ComboBox SelectedItem="{Binding site.nom}" 
+                                          SelectedIndex="0" 
+                                          ItemsSource="{Binding #comboSites.Items}" />           
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellEditingTemplate>
+                    </DataGridTemplateColumn>
+
+            </DataGrid.Columns>
     </DataGrid>
+    </ScrollViewer>
+
     </StackPanel>
 </UserControl>

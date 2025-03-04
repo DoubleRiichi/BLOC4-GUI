@@ -4,69 +4,97 @@
              x:DataType="viewModels:SalarieViewModel"
              x:Class="Bloc4_GUI.Views.SalarieView">
              
-        <StackPanel  Spacing="20">
+    <StackPanel Spacing="20">
         
-            <StackPanel  Margin="5,5"
-            Orientation="Horizontal" Spacing="12"
-            HorizontalAlignment="Center">
-                  <TextBox Width="100" Text="{Binding InputNom, Mode=TwoWay}" Watermark="Nom" AcceptsReturn="False"/>
-                  <TextBox Width="100" Text="{Binding InputPrenom, Mode=TwoWay}" Watermark="Prénom" AcceptsReturn="False"/>
-                  <TextBox Width="100" Text="{Binding InputPhoneFixe, Mode=TwoWay}"  Watermark="Téléphone Fixe" AcceptsReturn="False"/>
-                  <TextBox Width="100" Text="{Binding InputPhoneMobile, Mode=TwoWay}" Watermark="Téléphone Mobile" AcceptsReturn="False"/>
-                  <TextBox Width="130" Text="{Binding InputEmail, Mode=TwoWay}" Watermark="Email" AcceptsReturn="False"/>
+        <StackPanel Margin="5,5"
+                    Orientation="Horizontal" Spacing="12"
+                    HorizontalAlignment="Center">
+            <TextBox Width="100" Text="{Binding InputNom, Mode=TwoWay}" Watermark="Nom" AcceptsReturn="False"/>
+            <TextBox Width="100" Text="{Binding InputPrenom, Mode=TwoWay}" Watermark="Prénom" AcceptsReturn="False"/>
+            <TextBox Width="100" Text="{Binding InputPhoneFixe, Mode=TwoWay}" Watermark="Téléphone Fixe" AcceptsReturn="False"/>
+            <TextBox Width="100" Text="{Binding InputPhoneMobile, Mode=TwoWay}" Watermark="Téléphone Mobile" AcceptsReturn="False"/>
+            <TextBox Width="130" Text="{Binding InputEmail, Mode=TwoWay}" Watermark="Email" AcceptsReturn="False"/>
 
+            <ComboBox Name="comboServices" SelectedItem="{Binding SelectedService}" SelectedIndex="0" ItemsSource="{Binding ServicesDropdown}"/>                    
+            <ComboBox Name="comboSites" SelectedItem="{Binding SelectedSite}" SelectedIndex="0" ItemsSource="{Binding SitesDropdown}"/>
 
-
-                  <ComboBox Name="comboServices" SelectedItem="{Binding SelectedService}" SelectedIndex="0" ItemsSource="{Binding ServicesDropdown}"/>                    
-                  <ComboBox SelectedItem="{Binding SelectedSite}" SelectedIndex="0" ItemsSource="{Binding SitesDropdown}"/>
-                  <Button Content="Filtrer" Command="{Binding FilterCommand}" />
-                  <Button Content="Réinitialiser" Command="{Binding ResetFilterCommand}" />
-
-            </StackPanel>
-
-        <ScrollViewer>
-                <DataGrid 
-            ItemsSource="{Binding Salaries}" 
-            AutoGenerateColumns="False" 
-            IsReadOnly="False" 
-            GridLinesVisibility="All" 
-            BorderThickness="1" 
-            BorderBrush="Gray"
-            VerticalAlignment="Center"
-            HorizontalAlignment="Center">
-            
-            <DataGrid.Columns>
-
-                <DataGridTextColumn Header="Nom"                 Binding="{Binding nom}"/>
-                <DataGridTextColumn Header="Prénom"              Binding="{Binding prenom}"/>
-                <DataGridTextColumn Header="Téléphone Fixe"      Binding="{Binding telephone_fixe}"/>
-                <DataGridTextColumn Header="Téléphone Portable"  Binding="{Binding telephone_mobile}"/>
-                <DataGridTextColumn Header="Email"               Binding="{Binding email}"/>
-                <!-- <DataGridTextColumn Header="Service"             Binding="{Binding service.nom}"/> -->
-                <DataGridTemplateColumn Header="Service">
-                                       <!-- Display Template (when not in editing mode) -->
-                    <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate>
-                                <TextBlock Text="{Binding service.nom}" />
-                            </DataTemplate>
-                    </DataGridTemplateColumn.CellTemplate>
-                    <DataGridTemplateColumn.CellEditingTemplate>
-                        <DataTemplate >
-                                <ComboBox SelectedItem="{Binding service.nom}" 
-                                SelectedIndex="0" 
-                                ItemsSource="{Binding #comboServices.Items}" />           
-                        </DataTemplate>
-                    </DataGridTemplateColumn.CellEditingTemplate>
-                </DataGridTemplateColumn>
-
-                <DataGridTextColumn Header="Site"                Binding="{Binding service.site.nom}"/>
-
-            </DataGrid.Columns>
-
-        </DataGrid>
-    </ScrollViewer>
-    
-
-
+            <Button Content="Filtrer" Command="{Binding FilterCommand}" />
+            <Button Content="Réinitialiser" Command="{Binding ResetFilterCommand}" />
         </StackPanel>
+
+        <StackPanel Margin="5,5"
+                    Orientation="Horizontal" Spacing="12"
+                    HorizontalAlignment="Center">
+            <Button Content="Confirmer" Command="{Binding ConfirmChangesCommand}"/>
+            <Button Content="Annuler" Command="{Binding CancelChangesCommand}"/>
+        </StackPanel>
+
+        <StackPanel Margin="5,5"
+                    Orientation="Horizontal" Spacing="12"
+                    HorizontalAlignment="Center">
+            <Button Content="←"
+                    Command="{Binding GoToPreviousPageCommand}"
+                    IsEnabled="{Binding CanGoToPreviousPage}"/>
+            <ComboBox
+                SelectedItem="{Binding PageSelector, Mode=TwoWay}" SelectedIndex="0" ItemsSource="{Binding PagesIndex}"/>
+
+            <Button Content="→"
+                    Command="{Binding GoToNextPageCommand}"
+                    IsEnabled="{Binding CanGoToNextPage}"/>
+        </StackPanel>
+
+        <!-- Add a ScrollViewer to handle overflowing content and constrain the DataGrid's height -->
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <DataGrid ItemsSource="{Binding PageSalaries}" 
+                      AutoGenerateColumns="False" 
+                      IsReadOnly="False" 
+                      GridLinesVisibility="All" 
+                      BorderThickness="1" 
+                      BorderBrush="Gray"
+                      VerticalAlignment="Top" 
+                      HorizontalAlignment="Center"
+                      Name="SalariesGrid"
+                      MaxHeight="600"> <!-- Set the max height to ensure it stays within bounds -->
+                
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Nom" Binding="{Binding nom}"/>
+                    <DataGridTextColumn Header="Prénom" Binding="{Binding prenom}"/>
+                    <DataGridTextColumn Header="Téléphone Fixe" Binding="{Binding telephone_fixe}"/>
+                    <DataGridTextColumn Header="Téléphone Portable" Binding="{Binding telephone_mobile}"/>
+                    <DataGridTextColumn Header="Email" Binding="{Binding email}"/>
+
+                    <DataGridTemplateColumn Header="Service">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding service.nom}" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                        <DataGridTemplateColumn.CellEditingTemplate>
+                            <DataTemplate>
+                                <ComboBox SelectedItem="{Binding service.nom}" 
+                                          SelectedIndex="0" 
+                                          ItemsSource="{Binding #comboServices.Items}" />           
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellEditingTemplate>
+                    </DataGridTemplateColumn>
+
+                    <DataGridTemplateColumn Header="Site">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding service.site.nom}" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                        <DataGridTemplateColumn.CellEditingTemplate>
+                            <DataTemplate>
+                                <ComboBox SelectedItem="{Binding service.site.nom}" 
+                                          SelectedIndex="0" 
+                                          ItemsSource="{Binding #comboSites.Items}" />           
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellEditingTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+        </ScrollViewer>
+
+    </StackPanel>
 </UserControl>
