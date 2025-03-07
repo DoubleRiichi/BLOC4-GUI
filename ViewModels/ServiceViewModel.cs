@@ -1,15 +1,23 @@
 using Avalonia;
+using Avalonia.Collections;
 using Avalonia.Controls;
 using Avalonia.ReactiveUI;
+using Bloc4_GUI.DTO;
 using Bloc4_GUI.Models;
 using Bloc4_GUI.placeholder;
 using Bloc4_GUI.Services;
+using Bloc4_GUI.Views;
+using MsBox.Avalonia;
+using MsBox.Avalonia.Enums;
+using DynamicData;
 using ReactiveUI;
+using Splat;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reactive;
+using System.Threading.Tasks;
 
 
 namespace Bloc4_GUI.ViewModels;
@@ -37,25 +45,27 @@ public class ServiceViewModel :  ReactiveObject, IRoutableViewModel {
 
 
 
-        public ObservableCollection<Service> BaseServices { get; } = PlaceholderData.PlaceholderServices;
+        public ObservableCollection<Service> BaseServices { get; set; }
         
         public ObservableCollection<Service> Services { get; set; }
         public ObservableCollection<Service> PageServices { get; set; }
-        
+        public AvaloniaDictionary<int, Service> ServicesToBeDeleted { get; set; }
+        public List<Site> Sites {get; set;} 
 
-        public ObservableCollection<string> ServicesDropdown { get; }
-        public ObservableCollection<string> SitesDropdown { get; }
+        public ObservableCollection<string> ServicesDropdown { get; set; }
+        public ObservableCollection<string> SitesDropdown { get; set; }
 
         public ReactiveCommand<Unit, Unit> FilterCommand { get; }
         public ReactiveCommand<Unit, Unit> ResetFilterCommand { get; }
-        public ReactiveCommand<Unit, Unit> ConfirmChangesCommand { get; }
-        public ReactiveCommand<Unit, Unit> CancelChangesCommand { get; }  
+        public ReactiveCommand<Unit, Task> ConfirmChangesCommand { get; }
+        public ReactiveCommand<Unit, Task> CancelChangesCommand { get; }  
         public ReactiveCommand<Unit, Unit> GoToPreviousPageCommand { get; }
         public ReactiveCommand<Unit, Unit> GoToNextPageCommand { get; }
+        public ReactiveCommand<Unit, Unit> OpenAddServiceCommand { get; }
 
         private int ItemsPerPage = 30;
         public int TotalPages;
-        public List<int> PagesIndex {get; set;} = new List<int>();
+        public List<int> PagesIndex {get; set;} = new List<int>(1);
 
         private bool _canGoToPreviousPage = false;
         public bool CanGoToPreviousPage
@@ -97,37 +107,58 @@ public class ServiceViewModel :  ReactiveObject, IRoutableViewModel {
 
             FilterCommand = ReactiveCommand.Create(Filter);
             ResetFilterCommand = ReactiveCommand.Create(ResetFilter);
-            ConfirmChangesCommand = ReactiveCommand.Create(ConfirmChanges);
-            CancelChangesCommand = ReactiveCommand.Create(CancelChanges);
+            ConfirmChangesCommand = ReactiveCommand.Create(ConfirmChangesAsync);
+            CancelChangesCommand = ReactiveCommand.Create(CancelChangesAsync);
             GoToPreviousPageCommand = ReactiveCommand.Create(GoToPreviousPage);
             GoToNextPageCommand = ReactiveCommand.Create(GoToNextPage);
+            OpenAddServiceCommand = ReactiveCommand.Create(OpenAddService);
 
+
+            
             Services = new ObservableCollection<Service>();
-            
-            foreach(var service in BaseServices) {
-                Services.Add(service.Clone());    
-            }
-
-            PageServices = new ObservableCollection<Service>(Services.Take(ItemsPerPage));
-            
-            TotalPages = (int)Math.Ceiling((double)Services.Count / ItemsPerPage);
-            updatePagesIndex();
-            CanGoToPreviousPage = checkGoToPreviousPage();
-            CanGoToNextPage = checkGoToNextPage();
-
-            ServicesDropdown = new ObservableCollection<string>(BaseServices
-                .Select(s => s.nom)
-                .Distinct()
-                .ToList());
-
-            // ServicesDropdown.Insert(0, " ");
-            
-            SitesDropdown = new ObservableCollection<string>(BaseServices
-                .Select(s => s.site.nom)
-                .Distinct()
-                .ToList());    
+            Sites = new List<Site>();
+            ServicesDropdown = new ObservableCollection<string>();
+            SitesDropdown = new ObservableCollection<string>();
         }
 
+
+        public async Task InitializeAsync() {
+            try {
+                var servicesApi = await ApiService.GetAsync<List<Service>>("Services/get");
+                Sites.AddRange(await ApiService.GetAsync<List<Site>>("Sites/get"));
+
+                BaseServices = new ObservableCollection<Service>(servicesApi); 
+                    
+
+                foreach(var service in BaseServices) {
+                    Services.Add(service.Clone());    
+                }
+
+                PageServices = new ObservableCollection<Service>(Services.Take(ItemsPerPage));
+                
+                TotalPages = (int)Math.Ceiling((double)Services.Count / ItemsPerPage);
+                updatePagesIndex();
+                CanGoToPreviousPage = checkGoToPreviousPage();
+                CanGoToNextPage = checkGoToNextPage();
+
+                ServicesDropdown.AddRange(BaseServices
+                    .Select(s => s.nom)
+                    .Distinct()
+                    .ToList());
+
+                // ServicesDropdown.Insert(0, " ");
+                
+                SitesDropdown.AddRange(Sites
+                    .Select(s => s.nom)
+                    .Distinct()
+                    .ToList());    
+            } catch (Exception ex) {
+                var box = MessageBoxManager.GetMessageBoxStandard("Attention!", "Le logiciel ne peut pas contacter l'API, si le problème persiste consulter votre support informatique.", ButtonEnum.Ok);
+                box.ShowWindowAsync();
+            }
+                
+
+        }
 
         private bool checkGoToPreviousPage() => _currentPage > 1;
 
@@ -152,10 +183,10 @@ public class ServiceViewModel :  ReactiveObject, IRoutableViewModel {
                 return;
                 
                 CurrentPage = pageNumber;
-                UpdatePageSalaries();
+                UpdatePageServices();
         }
 
-        private void UpdatePageSalaries() {
+        private void UpdatePageServices() {
                 var skipCount = (_currentPage - 1) * ItemsPerPage;
 
                 var currentPageItems = Services.Skip(skipCount).Take(ItemsPerPage);
@@ -222,28 +253,58 @@ public class ServiceViewModel :  ReactiveObject, IRoutableViewModel {
         }
     }
 
-    public void ConfirmChanges() {
+    public async Task ConfirmChangesAsync() {
 
-        var editedSalaries = Services
+        var editedService = Services
                                 .Where(s => s.HasChanges == true)
                                 .ToList();         
-    }
 
-    public void CancelChanges() {
-        
-        for(int i = 0; i < PageServices.Count ; i++) {
+        var box = MessageBoxManager.GetMessageBoxStandard("Attention!", "Cette opération entraine des changements en base de données, assurez vous qu'ils soient conforme à vos attentes.\nConfirmer?", ButtonEnum.OkAbort);
+        var result = await box.ShowAsync();
 
-            if(PageServices[i].HasChanges) {
-                var baseSalarie = BaseServices
-                                    .FirstOrDefault(s => s.id == PageServices[i].id);
-                if(baseSalarie != null) {
-                    PageServices[i] = baseSalarie.Clone();
+
+
+        if (result == ButtonResult.Ok) {
+            foreach (var service in editedService) {
+                var site = Sites.Where(s => s.nom == service.site.nom).FirstOrDefault();
+                service.site = site;
                 
+                var dto = new ServiceDTO(service);
+
+                try {
+                    _ = await ApiService.PutAsync<ServiceDTO>("Services/update", new {services = dto, token = AuthService.GetInstance().token});
+                } catch (Exception ex) {
+                    Console.WriteLine(ex.Message);
                 }
             }
-        }    
+        }
+    }
 
-        PageSelector = CurrentPage;
+    public async Task CancelChangesAsync() {
+        var box = MessageBoxManager.GetMessageBoxStandard("Attention!", "Vous êtes sur le point d'annuler vos changements.\nConfirmer?", ButtonEnum.OkAbort);
+        var result = await box.ShowAsync();
+        
+        if(result == ButtonResult.Ok) {
+            for(int i = 0; i < PageServices.Count ; i++) {
+
+                if(PageServices[i].HasChanges) {
+                    var baseService = BaseServices
+                                        .FirstOrDefault(s => s.id == PageServices[i].id);
+                    if(baseService != null) {
+                        PageServices[i] = baseService.Clone();
+                    
+                    }
+                }
+            }    
+
+            foreach(var item in ServicesToBeDeleted) {
+                Services.Insert(item.Key, item.Value);
+            }
+
+            ServicesToBeDeleted.Clear();
+
+            PageSelector = CurrentPage;
+        }
     }
 
 
@@ -254,16 +315,52 @@ public class ServiceViewModel :  ReactiveObject, IRoutableViewModel {
 
 
     public async void HandleCellEdit(DataGridCellEditEndedEventArgs e) {
-        var editedSalaries = e.Row.DataContext as Service;
+        var editedServices = e.Row.DataContext as Service;
   
 
-        editedSalaries?.MarkAsChanged();
-        Service salarie = Services.Where(s => s.id == editedSalaries?.id).First();
+        editedServices?.MarkAsChanged();
+        Service salarie = Services.Where(s => s.id == editedServices?.id).First();
                 
             int index = Services.IndexOf(salarie);
-            Services[index] = editedSalaries?.Clone();
+            Services[index] = editedServices?.Clone();
         
     }
-    
 
+
+    public async void DeleteService(Service item) {
+        var box = MessageBoxManager.GetMessageBoxStandard("Attention!", "Vous êtes sur le point d'annuler tous vos changements.\nConfirmer?", ButtonEnum.OkAbort);
+        var result = await box.ShowAsync();
+        
+        
+        if(item != null && result == ButtonResult.Ok) {
+            try {
+                _ = await ApiService.DeleteAsync<Service>("Services/delete/" + item.id);
+            } catch (Exception ex) {
+
+            }
+
+            for(int i = 0; i < Services.Count; i++) {
+                if (Services[i].id == item.id) {
+                    Services.RemoveAt(i);
+                    updatePagesIndex();
+                    PageSelector = CurrentPage;
+                    break;
+                }
+            }
+        }
+    }
+
+    private void OpenAddService() {
+        var window = new AddServiceView{
+            DataContext = new AddServiceViewModel()
+        };
+        
+        var mainWindow = Locator.Current.GetService<MainWindow>();
+
+        // var modalViewModel = (AddSalarieView) window.DataContext;
+        window.ShowDialog(mainWindow);
+
+        updatePagesIndex();
+        PageSelector = CurrentPage;
+    }    
 }

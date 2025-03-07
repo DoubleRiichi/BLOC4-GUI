@@ -12,7 +12,7 @@ namespace Bloc4_GUI.Services;
 public static class ApiService {
 
     //todo: declare the api_url in a config file and let the program load it
-    private readonly static string API_URL = "";
+    private readonly static string API_URL = "http://localhost:5290";
     
     private static readonly HttpClient _httpClient = new HttpClient{
         BaseAddress = new Uri(API_URL)
@@ -46,6 +46,7 @@ public static class ApiService {
         return JsonSerializer.Deserialize<T>(jsonResponse);
     }
 
+
     public static async Task<bool> PingAsync()
     {
         try
@@ -63,12 +64,24 @@ public static class ApiService {
 
     public static async Task<T> PutAsync<T>(string endpoint, object payload)
     {
-    
+        
         var jsonPayload = JsonSerializer.Serialize(payload);
         var content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
         var response = await _httpClient.PutAsync(endpoint, content);
         
         response.EnsureSuccessStatusCode();
+
+        var jsonResponse = await response.Content.ReadAsStringAsync();
+        return JsonSerializer.Deserialize<T>(jsonResponse);
+    }
+
+
+    
+    public static async Task<T> DeleteAsync<T>(string endpoint)
+    {
+        var response = await _httpClient.DeleteAsync(endpoint);
+        response.EnsureSuccessStatusCode();
+
 
         var jsonResponse = await response.Content.ReadAsStringAsync();
         return JsonSerializer.Deserialize<T>(jsonResponse);

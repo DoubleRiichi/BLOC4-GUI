@@ -8,15 +8,16 @@ using ReactiveUI;
 
 namespace Bloc4_GUI.Views;
 
-public partial class ServiceView : ReactiveUserControl<ServiceViewModel> {
-    public ServiceView() {
+public partial class SiteView : ReactiveUserControl<SiteViewModel> {
+    public SiteView() {
         this.WhenActivated(disposables => {
             _ =  ViewModel.InitializeAsync();
 
         });
+
         AvaloniaXamlLoader.Load(this);
 
-        var dataGrid = this.FindControl<DataGrid>("ServicesGrid");
+        var dataGrid = this.FindControl<DataGrid>("SitesGrid");
         dataGrid.CellEditEnded += (sender, e) => {
             ViewModel.HandleCellEdit(e);
         };
@@ -31,10 +32,10 @@ public partial class ServiceView : ReactiveUserControl<ServiceViewModel> {
        private void DeleteButton_Click(object sender, RoutedEventArgs e) {
         var button = sender as Button;
             if (button != null) {
-                var service = button.DataContext as Service;
+                var site = button.DataContext as Site;
 
-                if (service != null) {
-                    ViewModel.DeleteService(service);
+                if (site != null) {
+                    ViewModel.DeleteSite(site);
                 }
             }
     }

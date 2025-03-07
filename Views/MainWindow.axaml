@@ -9,6 +9,12 @@
         x:Class="Bloc4_GUI.Views.MainWindow"
         x:DataType="viewModels:MainWindowViewModel"
         Title="Workers Indexer">
+
+    <Window.KeyBindings>
+        <KeyBinding Gesture="Alt+X" Command="{Binding OpenSecretCommand}">
+        </KeyBinding>
+    </Window.KeyBindings>
+
     <Grid ColumnDefinitions="10*, 1*, 89*" 
           ShowGridLines="True">
         <!-- <Grid.RowDefinitions>
@@ -30,8 +36,8 @@
 
             <Button Content="Salariés" Command="{Binding VisitSalarie}" />
             <Button Content="Services" Command="{Binding VisitService}" />
+            <Button Content="Sites" Command="{Binding VisitSite}" />
 
-            <TextBlock Text="{Binding Router.NavigationStack.Count}" />
         </StackPanel>
 
         <GridSplitter Grid.Column="1" ResizeDirection="Columns"/>

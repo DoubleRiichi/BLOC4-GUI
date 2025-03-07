@@ -6,20 +6,28 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reactive;
 using System.Reactive.Linq;
+using System.Threading.Tasks;
+using Avalonia.Collections;
 using Avalonia.Controls;
 using Bloc4_GUI.Models;
 using Bloc4_GUI.placeholder;
 using Bloc4_GUI.Services;
+using Bloc4_GUI.Views;
+using DynamicData;
 using MsBox.Avalonia;
 using MsBox.Avalonia.Enums;
+using Avalonia.Controls.Mixins;
 using ReactiveUI;
+using Splat;
+using Bloc4_GUI.DTO;
 
 namespace Bloc4_GUI.ViewModels;
 
 
 
-public class SalarieViewModel : ReactiveObject, IRoutableViewModel
-{
+public class SalarieViewModel : ReactiveObject, IRoutableViewModel 
+{       
+        
         // Reference to IScreen that owns the routable view model.
         public IScreen HostScreen { get; }
 
@@ -77,24 +85,29 @@ public class SalarieViewModel : ReactiveObject, IRoutableViewModel
 
 
 
-        public ObservableCollection<Salarie> BaseSalaries { get; } = PlaceholderData.Salaries;
+        public ObservableCollection<Salarie> BaseSalaries { get; set; } // = PlaceholderData.Salaries;
         public ObservableCollection<Salarie> Salaries { get; set;}
         public ObservableCollection<Salarie> PageSalaries { get; set;}
+        public AvaloniaDictionary<int, Salarie> SalariesToBeDeleted { get; set; }
 
+        public List<Service> Services{ get; set; } = new List<Service>();
+        public List<Site> Sites { get; set; } = new List<Site>();
         
         private int ItemsPerPage = 30;
         public int TotalPages;
-        public List<int> PagesIndex {get; set;} = new List<int>();
+        public List<int> PagesIndex {get; set;} = new List<int>(1);
 
-        public ObservableCollection<string> ServicesDropdown { get; }
-        public ObservableCollection<string> SitesDropdown { get; }
+        public ObservableCollection<string> ServicesDropdown { get; set;}
+        public ObservableCollection<string> SitesDropdown { get; set;}
 
         public ReactiveCommand<Unit, Unit> FilterCommand { get; }
         public ReactiveCommand<Unit, Unit> ResetFilterCommand { get; }
-        public ReactiveCommand<Unit, Unit> ConfirmChangesCommand { get; }
-        public ReactiveCommand<Unit, Unit> CancelChangesCommand { get; }  
+        public ReactiveCommand<Unit, Task> ConfirmChangesCommand { get; }
+        public ReactiveCommand<Unit, Task> CancelChangesCommand { get; }  
         public ReactiveCommand<Unit, Unit> GoToPreviousPageCommand { get; }
         public ReactiveCommand<Unit, Unit> GoToNextPageCommand { get; }
+        public ReactiveCommand<Unit, Unit> OpenAddSalarieCommand { get; }
+
 
 
 
@@ -127,11 +140,13 @@ public class SalarieViewModel : ReactiveObject, IRoutableViewModel
             get => _pageSelector;
             set {   
                     this.RaiseAndSetIfChanged(ref _pageSelector, value);
-                    GoToPage(_pageSelector);
+                    GoToPage(value);
             }
         }
 
-        public SalarieViewModel(IScreen screen) {
+    public ViewModelActivator Activator { get; set; }
+
+    public SalarieViewModel(IScreen screen) {
             HostScreen = screen;
 
             FilterCommand = ReactiveCommand.Create(Filter);
@@ -140,33 +155,57 @@ public class SalarieViewModel : ReactiveObject, IRoutableViewModel
             CancelChangesCommand = ReactiveCommand.Create(CancelChanges);
             GoToPreviousPageCommand = ReactiveCommand.Create(GoToPreviousPage);
             GoToNextPageCommand = ReactiveCommand.Create(GoToNextPage);
+            OpenAddSalarieCommand = ReactiveCommand.Create(OpenAddSalarie);
+
+            BaseSalaries = new ObservableCollection<Salarie>(); 
+            Salaries = new ObservableCollection<Salarie>();
+            PageSalaries = new ObservableCollection<Salarie>();
+            SalariesToBeDeleted = new AvaloniaDictionary<int, Salarie>();
+
+            ServicesDropdown = new ObservableCollection<string>();
+            SitesDropdown = new ObservableCollection<string>();
+
+        }
+    
+    
+    public async Task InitializeAsync() {
+            try {
+                var salariesAPI = await ApiService.GetAsync<List<Salarie>>("Salaries/get");
+                Services.AddRange(await ApiService.GetAsync<List<Service>>("Services/get"));
+                Sites.AddRange(await ApiService.GetAsync<List<Site>>("Sites/get"));
+       
+
             
+            BaseSalaries = new ObservableCollection<Salarie>(salariesAPI); 
             Salaries = new ObservableCollection<Salarie>();
             
             foreach(var salarie in BaseSalaries) {
                 Salaries.Add(salarie.Clone());    
             }
 
-            PageSalaries = new ObservableCollection<Salarie>(Salaries.Take(ItemsPerPage));
+            PageSalaries.AddRange(Salaries.Take(ItemsPerPage));
             
             TotalPages = (int)Math.Ceiling((double)Salaries.Count / ItemsPerPage);
-            updatePagesIndex();
+            UpdatePagesIndex();
             CanGoToPreviousPage = checkGoToPreviousPage();
             CanGoToNextPage = checkGoToNextPage();
 
-            ServicesDropdown = new ObservableCollection<string>(BaseSalaries
-                .Select(s => s.service.nom)
+            ServicesDropdown.AddRange(Services
+                .Select(s => s.nom)
                 .Distinct()
                 .ToList());
 
-            // ServicesDropdown.Insert(0, " ");
             
-            SitesDropdown = new ObservableCollection<string>(BaseSalaries
-                .Select(s => s.service.site.nom)
+            SitesDropdown.AddRange(Sites
+                .Select(s => s.nom)
                 .Distinct()
-                .ToList());               
-        }
+                .ToList());     
 
+        } catch (Exception ex) {
+            var box = MessageBoxManager.GetMessageBoxStandard("Attention!", "Le logiciel ne peut pas contacter l'API, si le problème persiste consulter votre support informatique.", ButtonEnum.Ok);
+            box.ShowWindowAsync();
+        }          
+    }
 
     private bool checkGoToPreviousPage() => _currentPage > 1;
 
@@ -191,6 +230,7 @@ public class SalarieViewModel : ReactiveObject, IRoutableViewModel
             return;
         
         CurrentPage = pageNumber;
+    
         UpdatePageSalaries();
     }
 
@@ -206,16 +246,8 @@ public class SalarieViewModel : ReactiveObject, IRoutableViewModel
         } 
     }
 
-    private void SetItemsPerPage(int ItemsPerPage) {
-        if(ItemsPerPage > BaseSalaries.Count)
-            return;
-        
-        this.ItemsPerPage = ItemsPerPage;
-        TotalPages = (int)Math.Ceiling((double)Salaries.Count / ItemsPerPage);
-        updatePagesIndex();
-    }
 
-    private void updatePagesIndex() {
+    private void UpdatePagesIndex() {
         PagesIndex.Clear();
         TotalPages = (int)Math.Ceiling((double)Salaries.Count / ItemsPerPage);
 
@@ -272,7 +304,7 @@ public class SalarieViewModel : ReactiveObject, IRoutableViewModel
         }
 
         PageSelector = 1;
-        updatePagesIndex();
+        UpdatePagesIndex();
     }
 
     public void ResetFilter() {
@@ -291,30 +323,65 @@ public class SalarieViewModel : ReactiveObject, IRoutableViewModel
         foreach (var salarie in BaseSalaries) {
             Salaries.Add(salarie);
         }
+
+        PageSelector = 1;
+        UpdatePagesIndex();
     }
 
-    public void ConfirmChanges() {
+    public async Task ConfirmChanges() {
 
         var editedSalaries = Salaries
                                 .Where(s => s.HasChanges == true)
-                                .ToList();         
+                                .ToList();        
+
+        var box = MessageBoxManager.GetMessageBoxStandard("Attention!", "Cette opération entraine des changements en base de données, assurez vous qu'ils soient conforme à vos attentes.\nConfirmer?", ButtonEnum.OkAbort);
+        var result = await box.ShowAsync();
+
+        if (result == ButtonResult.Ok && editedSalaries.Count > 0) {
+            
+            foreach (var salarie in editedSalaries) {
+                salarie.service = Services.Where(s => s.nom == salarie.service.nom).FirstOrDefault();
+                
+                var dto = new SalarieDTO(salarie);
+                
+                try {
+                    _ = await ApiService.PutAsync<SalarieDTO>("Salaries/update", new {salaries = dto, token = AuthService.GetInstance().token});
+                } catch (Exception ex) {
+                    Console.WriteLine(ex.Message);
+                }
+
+            }
+        }
+ 
     }
 
-    public void CancelChanges() {
+    public async Task CancelChanges() {
+        var box = MessageBoxManager.GetMessageBoxStandard("Attention!", "Vous êtes sur le point d'annuler tous vos changements.\nConfirmer?", ButtonEnum.OkAbort);
+        var result = await box.ShowAsync();
         
-        for(int i = 0; i < PageSalaries.Count ; i++) {
+        if(result == ButtonResult.Ok) {
 
-            if(PageSalaries[i].HasChanges) {
-                var baseSalarie = BaseSalaries
-                                    .FirstOrDefault(s => s.id == PageSalaries[i].id);
-                if(baseSalarie != null) {
-                    PageSalaries[i] = baseSalarie.Clone();
-                
+            for(int i = 0; i < PageSalaries.Count ; i++) {
+
+                if(PageSalaries[i].HasChanges) {
+                    var baseSalarie = BaseSalaries
+                                        .FirstOrDefault(s => s.id == PageSalaries[i].id);
+                    if(baseSalarie != null) {
+                        PageSalaries[i] = baseSalarie.Clone();
+                    
+                    }
                 }
-            }
-        }    
+            }    
 
-        PageSelector = CurrentPage;
+            foreach(var item in SalariesToBeDeleted) {
+
+                Salaries.Insert(item.Key, item.Value);
+            }
+            
+            SalariesToBeDeleted.Clear();
+
+            PageSelector = CurrentPage;
+        }
     }
 
 
@@ -349,6 +416,7 @@ public class SalarieViewModel : ReactiveObject, IRoutableViewModel
             message += $"{editedSalaries.email} n'est pas une adresse mail valide!\n";
             error = true;
         }
+
         
         if(error) {
             var box = MessageBoxManager.GetMessageBoxStandard("Attention!", message, ButtonEnum.Ok);
@@ -372,8 +440,44 @@ public class SalarieViewModel : ReactiveObject, IRoutableViewModel
         } 
 
     }
-    
 
 
-    
+    public async void DeleteSalarie(Salarie item) {
+        var box = MessageBoxManager.GetMessageBoxStandard("Attention!", "Cette opération entraine des changements en base de données, assurez vous qu'ils soient conforme à vos attentes.\nConfirmer?", ButtonEnum.OkAbort);
+        var result = await box.ShowAsync();
+        
+        
+        if(item != null && result == ButtonResult.Ok) {
+            try {
+                _ = await ApiService.DeleteAsync<Salarie>("Salaries/delete/" + item.id);
+
+            } catch (Exception ex) {
+
+            }
+
+
+            for(int i = 0; i < Salaries.Count; i++) {
+                if (Salaries[i].id == item.id) {
+                    //SalariesToBeDeleted[i] = item;
+                    Salaries.RemoveAt(i);
+                    UpdatePagesIndex();
+                    PageSelector = CurrentPage;
+                    break;
+                }
+            }
+        }
+    }
+
+    private void OpenAddSalarie() {
+        var window = new AddSalarieView{
+            DataContext = new AddSalarieViewModel()
+        };
+        
+        var mainWindow = Locator.Current.GetService<MainWindow>();
+
+        // var modalViewModel = (AddSalarieView) window.DataContext;
+        window.ShowDialog(mainWindow);
+        UpdatePagesIndex();
+        PageSelector = CurrentPage;
+    }    
 }

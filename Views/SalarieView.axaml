@@ -25,6 +25,8 @@
         <StackPanel Margin="5,5"
                     Orientation="Horizontal" Spacing="12"
                     HorizontalAlignment="Center">
+
+            <Button Content="Ajouter" Command="{Binding OpenAddSalarieCommand}"/>
             <Button Content="Confirmer" Command="{Binding ConfirmChangesCommand}"/>
             <Button Content="Annuler" Command="{Binding CancelChangesCommand}"/>
         </StackPanel>
@@ -36,7 +38,7 @@
                     Command="{Binding GoToPreviousPageCommand}"
                     IsEnabled="{Binding CanGoToPreviousPage}"/>
             <ComboBox
-                SelectedItem="{Binding PageSelector, Mode=TwoWay}" SelectedIndex="0" ItemsSource="{Binding PagesIndex}"/>
+                SelectedItem="{Binding PageSelector, Mode=TwoWay}"  ItemsSource="{Binding PagesIndex}"/>
 
             <Button Content="→"
                     Command="{Binding GoToNextPageCommand}"
@@ -45,7 +47,7 @@
 
         <!-- Add a ScrollViewer to handle overflowing content and constrain the DataGrid's height -->
         <ScrollViewer VerticalScrollBarVisibility="Auto">
-            <DataGrid ItemsSource="{Binding PageSalaries}" 
+            <DataGrid ItemsSource="{Binding PageSalaries, Mode=TwoWay}" 
                       AutoGenerateColumns="False" 
                       IsReadOnly="False" 
                       GridLinesVisibility="All" 
@@ -78,20 +80,27 @@
                         </DataGridTemplateColumn.CellEditingTemplate>
                     </DataGridTemplateColumn>
 
+
                     <DataGridTemplateColumn Header="Site">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
                                 <TextBlock Text="{Binding service.site.nom}" VerticalAlignment="Center" HorizontalAlignment="Center" />
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+
+                    <DataGridTemplateColumn Header="Suppression">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Button Name="deleteButton" Content="X" Click="DeleteButton_Click"  VerticalAlignment="Center" HorizontalAlignment="Center"/>         
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
                         <DataGridTemplateColumn.CellEditingTemplate>
                             <DataTemplate>
-                                <ComboBox SelectedItem="{Binding service.site.nom}" 
-                                          SelectedIndex="0" 
-                                          ItemsSource="{Binding #comboSites.Items}" />           
                             </DataTemplate>
                         </DataGridTemplateColumn.CellEditingTemplate>
                     </DataGridTemplateColumn>
+
                 </DataGrid.Columns>
             </DataGrid>
         </ScrollViewer>

@@ -12,6 +12,8 @@ public class AppViewLocator : ReactiveUI.IViewLocator
         {
             SalarieViewModel context => new SalarieView { DataContext = context },
             ServiceViewModel context => new ServiceView { DataContext = context },
+            SiteViewModel context => new SiteView { DataContext = context },
+
             _ => throw new ArgumentOutOfRangeException(nameof(viewModel))
         };
 }

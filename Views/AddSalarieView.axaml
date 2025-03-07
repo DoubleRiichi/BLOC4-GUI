@@ -1,0 +1,40 @@
+<Window xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:viewModels="clr-namespace:Bloc4_GUI.ViewModels" 
+             x:DataType="viewModels:AddSalarieViewModel"
+             x:Class="Bloc4_GUI.Views.AddSalarieView"
+             Title="Ajouter un Salarié"
+             Width="1200"
+             Height="100">
+
+    <StackPanel     Margin="5,5"
+                    Orientation="Horizontal" Spacing="12"
+                    HorizontalAlignment="Center">
+
+            <TextBox Width="130" Height="30" Text="{Binding InputNom, Mode=TwoWay}" Watermark="Nom" AcceptsReturn="False"/>
+            <TextBox Width="130" Height="30" Text="{Binding InputPrenom, Mode=TwoWay}" Watermark="Prénom" AcceptsReturn="False"/>
+            <TextBox Width="130" Height="30" Text="{Binding InputPhoneFixe, Mode=TwoWay}" Watermark="Téléphone Fixe" AcceptsReturn="False"/>
+            <TextBox Width="130" Height="30" Text="{Binding InputPhoneMobile, Mode=TwoWay}" Watermark="Téléphone Mobile" AcceptsReturn="False"/>
+            <TextBox Width="130" Height="30" Text="{Binding InputEmail, Mode=TwoWay}" Watermark="Email" AcceptsReturn="False"/>
+
+            <ComboBox VerticalAlignment="Center" Name="comboServices" SelectedItem="{Binding SelectedService}" SelectedIndex="0" ItemsSource="{Binding ServicesDropdown}">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding nom}" />
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>                 
+
+            <ComboBox VerticalAlignment="Center" Name="comboSites" SelectedItem="{Binding SelectedSite}" SelectedIndex="0" ItemsSource="{Binding SitesDropdown}">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding nom}" />
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox> 
+
+            <Button Content="Valider" Command="{Binding CreateSalarie}" />
+
+    </StackPanel>
+
+</Window>

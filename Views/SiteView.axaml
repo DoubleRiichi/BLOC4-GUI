@@ -1,16 +1,15 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:viewModels="clr-namespace:Bloc4_GUI.ViewModels" 
-             x:DataType="viewModels:ServiceViewModel"
-             x:Class="Bloc4_GUI.Views.ServiceView">
+             x:DataType="viewModels:SiteViewModel"
+             x:Class="Bloc4_GUI.Views.SiteView">
              
     <StackPanel Spacing="20">
         <StackPanel Margin="5,5"
                     Orientation="Horizontal" Spacing="12"
                     HorizontalAlignment="Center">
-            <ComboBox Name="comboServices" SelectedItem="{Binding SelectedService}" SelectedIndex="0" ItemsSource="{Binding ServicesDropdown}"/>                    
-            <ComboBox Name="comboSites" SelectedItem="{Binding SelectedSite}" SelectedIndex="0" ItemsSource="{Binding SitesDropdown}"/>
-
+            <TextBox Width="100" Text="{Binding InputNom, Mode=TwoWay}" Watermark="Nom" AcceptsReturn="False"/>
+            
             <Button Content="Filtrer" Command="{Binding FilterCommand}" />
             <Button Content="Réinitialiser" Command="{Binding ResetFilterCommand}" />
         </StackPanel>
@@ -19,7 +18,7 @@
                     Orientation="Horizontal" Spacing="12"
                     HorizontalAlignment="Center">
 
-            <Button Content="Ajouter" Command="{Binding OpenAddServiceCommand}"/>
+            <Button Content="Ajouter" Command="{Binding OpenAddSiteCommand}"/>
             <Button Content="Confirmer" Command="{Binding ConfirmChangesCommand}"/>
             <Button Content="Annuler"   Command="{Binding CancelChangesCommand}"/>
         </StackPanel>
@@ -40,7 +39,7 @@
 
         <ScrollViewer VerticalScrollBarVisibility="Auto">
                 <DataGrid 
-            ItemsSource="{Binding Services, Mode=TwoWay}" 
+            ItemsSource="{Binding Sites, Mode=TwoWay}" 
             AutoGenerateColumns="False" 
             IsReadOnly="False" 
             GridLinesVisibility="All" 
@@ -48,12 +47,12 @@
             BorderBrush="Gray"
             VerticalAlignment="Center"
             HorizontalAlignment="Center"
-            Name="ServicesGrid"
+            Name="SitesGrid"
             MaxHeight="600">
             
             <DataGrid.Columns>
 
-                    <DataGridTemplateColumn Header="Service">
+                    <DataGridTemplateColumn Header="Nom">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
                                 <TextBlock Text="{Binding nom}" VerticalAlignment="Center" HorizontalAlignment="Center" />
@@ -70,21 +69,7 @@
                         </DataGridTemplateColumn.CellEditingTemplate>
                     </DataGridTemplateColumn>
 
-                    <DataGridTemplateColumn Header="Site">
-                        <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate>
-                                <TextBlock Text="{Binding site.nom}" VerticalAlignment="Center" HorizontalAlignment="Center" />
-                            </DataTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
-                        <DataGridTemplateColumn.CellEditingTemplate>
-                            <DataTemplate>
-                                <ComboBox SelectedItem="{Binding site.nom}" 
-                                          SelectedIndex="0" 
-                                          ItemsSource="{Binding #comboSites.Items}" />           
-                            </DataTemplate>
-                        </DataGridTemplateColumn.CellEditingTemplate>
-                    </DataGridTemplateColumn>
-                    
+    
                     <DataGridTemplateColumn Header="Suppression">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>

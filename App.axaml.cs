@@ -6,6 +6,8 @@ using System.Linq;
 using Avalonia.Markup.Xaml;
 using Bloc4_GUI.ViewModels;
 using Bloc4_GUI.Views;
+using Splat;
+
 
 namespace Bloc4_GUI;
 
@@ -27,9 +29,13 @@ public partial class App : Application
             {
                 DataContext = new MainWindowViewModel(),
             };
+
+            Locator.CurrentMutable.RegisterConstant(desktop.MainWindow, typeof(MainWindow));
+
+
         }
 
-        base.OnFrameworkInitializationCompleted();
+        // base.OnFrameworkInitializationCompleted();
     }
 
     private void DisableAvaloniaDataAnnotationValidation()
@@ -44,4 +50,6 @@ public partial class App : Application
             BindingPlugins.DataValidators.Remove(plugin);
         }
     }
+
+    
 }
