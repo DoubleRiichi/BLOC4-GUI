@@ -23,7 +23,7 @@ Ce logiciel doit être utilisé en tandem avec l'API BLOC4-API [lien](https://gi
 
 ## Procédure d'installation
 Prérequis :
-- BLOC4-API installées et fonctionnelle (voir [README](https://github.com/DoubleRiichi/BLOC4-API) du dépot)
+- BLOC4-API installé et fonctionnel (voir [README](https://github.com/DoubleRiichi/BLOC4-API) du dépot)
 - Runtime compatible DotNet 8.0
 - Extracteur d'archive compatible avec .7z
 
