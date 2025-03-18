@@ -1,4 +1,5 @@
 using System;
+using System.Net.Http;
 using System.Threading.Tasks;
 using Avalonia.Data.Converters;
 using Bloc4_GUI.Models;
@@ -9,7 +10,7 @@ namespace Bloc4_GUI.Services;
 
 
 public sealed class AuthService {
-    bool Connected {get; set;} = false;
+    public static bool Connected {get; set;} = false;
     private static Connexion? currentConnexion {get; set;}
 
 
@@ -30,6 +31,7 @@ public sealed class AuthService {
             var response = await ApiService.PostAsync<Connexion>("Connexion/login", GetInstance());
             GetInstance().token = response.token;
             GetInstance().password = "";
+            Connected = true;
             return true;
         } catch (Exception ex) {
             return false;
@@ -39,18 +41,19 @@ public sealed class AuthService {
 
     public static async Task<bool> Logout() {
         var instance = GetInstance();
+        Connected = false;
 
-        if(instance.id != null && instance.token != null) {
+        if (instance.id != null && instance.token != null) {
             try {
                 await ApiService.PostAsync<Connexion>("Connexion/logout", instance);
                 currentConnexion = null;
                 return true;
-            } catch (Exception ex) {
+            } catch (HttpRequestException ex) {
                 
                 return false;
             }
+            catch (Exception ex) { }
         }        
-        
         return false;
     }
 

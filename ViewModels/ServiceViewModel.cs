@@ -4,7 +4,6 @@ using Avalonia.Controls;
 using Avalonia.ReactiveUI;
 using Bloc4_GUI.DTO;
 using Bloc4_GUI.Models;
-using Bloc4_GUI.placeholder;
 using Bloc4_GUI.Services;
 using Bloc4_GUI.Views;
 using MsBox.Avalonia;
@@ -18,6 +17,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reactive;
 using System.Threading.Tasks;
+using System.Net.Http;
 
 
 namespace Bloc4_GUI.ViewModels;
@@ -41,9 +41,18 @@ public class ServiceViewModel :  ReactiveObject, IRoutableViewModel {
             set => this.RaiseAndSetIfChanged(ref _selectedSite, value);
         }
 
-        public Service? currentCellState { get; set; }
 
+        public bool Connected
+        {
+            get => AuthService.Connected;
+        }
 
+        public bool NotConnected
+        {
+            get => !AuthService.Connected;
+        }
+
+    public Service? currentCellState { get; set; }
 
         public ObservableCollection<Service> BaseServices { get; set; }
         
@@ -271,10 +280,25 @@ public class ServiceViewModel :  ReactiveObject, IRoutableViewModel {
                 
                 var dto = new ServiceDTO(service);
 
+                var error = false;
+
                 try {
                     _ = await ApiService.PutAsync<ServiceDTO>("Services/update", new {services = dto, token = AuthService.GetInstance().token});
-                } catch (Exception ex) {
+                } catch (HttpRequestException ex) {
                     Console.WriteLine(ex.Message);
+                    error = true;
+                }
+                catch (Exception ex) { }
+
+                if (error)
+                {
+                    box = MessageBoxManager.GetMessageBoxStandard("Info", "Erreur Réseau : Changements impossibles", ButtonEnum.Ok);
+                    result = await box.ShowAsync();
+                }
+                else
+                {
+                    box = MessageBoxManager.GetMessageBoxStandard("Info", "Changements réussis", ButtonEnum.Ok);
+                    result = await box.ShowAsync();
                 }
             }
         }
@@ -330,16 +354,30 @@ public class ServiceViewModel :  ReactiveObject, IRoutableViewModel {
     public async void DeleteService(Service item) {
         var box = MessageBoxManager.GetMessageBoxStandard("Attention!", "Vous êtes sur le point d'annuler tous vos changements.\nConfirmer?", ButtonEnum.OkAbort);
         var result = await box.ShowAsync();
-        
-        
+
+        var error = false;
+
         if(item != null && result == ButtonResult.Ok) {
             try {
                 _ = await ApiService.DeleteAsync<Service>("Services/delete/" + item.id);
-            } catch (Exception ex) {
+            } catch (HttpRequestException ex) {
+                error = true;
+            }
+            catch (Exception ex) { }
 
+            if (error)
+            {
+                box = MessageBoxManager.GetMessageBoxStandard("Info", "Erreur Réseau : Suppression impossible", ButtonEnum.Ok);
+                result = await box.ShowAsync();
+                return;
+            }
+            else
+            {
+                box = MessageBoxManager.GetMessageBoxStandard("Info", "Suppression réussite", ButtonEnum.Ok);
+                result = await box.ShowAsync();
             }
 
-            for(int i = 0; i < Services.Count; i++) {
+            for (int i = 0; i < Services.Count; i++) {
                 if (Services[i].id == item.id) {
                     Services.RemoveAt(i);
                     updatePagesIndex();

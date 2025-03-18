@@ -16,14 +16,14 @@
     </Window.KeyBindings>
 
     <Grid ColumnDefinitions="10*, 1*, 89*" 
-          ShowGridLines="True">
+          >
         <!-- <Grid.RowDefinitions>
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions> -->
 
     
-        <StackPanel Grid.Column="0" Orientation="Vertical" Margin="15">
+        <StackPanel Grid.Column="0" Orientation="Vertical" Margin="0" Background="Gainsboro">
             <StackPanel.Styles>
                 <Style Selector="StackPanel > :is(Control)">
                     <Setter Property="Margin" Value="2"/>
@@ -34,9 +34,10 @@
             </StackPanel.Styles>
 
 
-            <Button Content="Salariés" Command="{Binding VisitSalarie}" />
-            <Button Content="Services" Command="{Binding VisitService}" />
-            <Button Content="Sites" Command="{Binding VisitSite}" />
+            <Button Content="Salariés" Command="{Binding VisitSalarie}" HorizontalAlignment="Center" />
+            <Button Content="Services" Command="{Binding VisitService}" HorizontalAlignment="Center" />
+            <Button Content="Sites" Command="{Binding VisitSite}" HorizontalAlignment="Center" />
+			<Button Content="Déconnexion" IsVisible="{Binding Connected}" Command="{Binding LogoutCommand}"/>
 
         </StackPanel>
 

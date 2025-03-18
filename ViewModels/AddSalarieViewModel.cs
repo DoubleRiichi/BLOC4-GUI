@@ -1,8 +1,6 @@
-using Bloc4_GUI.placeholder;
 using ReactiveUI;
 using System.Collections.ObjectModel;
 using System.Reactive;
-using Bloc4_GUI.placeholder;
 using Bloc4_GUI.Models;
 using DynamicData;
 using Bloc4_GUI.Services;
@@ -12,6 +10,8 @@ using MsBox.Avalonia;
 using System.Threading.Tasks;
 using MsBox.Avalonia.Enums;
 using System;
+using Tmds.DBus.Protocol;
+using System.Net.Http;
 
 namespace Bloc4_GUI.ViewModels;
 
@@ -20,6 +20,8 @@ public class AddSalarieViewModel : ReactiveObject
 {
     // public ReactiveCommand<Unit, Unit> ValidateCommand { get; }
     
+
+
     private Service _selectedService;
     public Service SelectedService {
             get => _selectedService;
@@ -110,7 +112,7 @@ public class AddSalarieViewModel : ReactiveObject
             error = true;
         }
 
-        if(SelectedService.site.id != SelectedSite.id) {
+        if(SelectedService?.site?.id != SelectedSite?.id) {
             message += "Le service n'est pas présent sur le site sélectionné.\n";
             error = true;
         }
@@ -140,14 +142,30 @@ public class AddSalarieViewModel : ReactiveObject
         salarie.telephone_mobile = InputPhoneMobile;
         salarie.email = InputEmail;
         salarie.service = SelectedService;
+
+        var error = false;
         
         var dto = new SalarieDTO(salarie);
 
         try {
             await ApiService.PostAsync<SalarieDTO>("Salaries/create", new {salaries = dto, token = AuthService.GetInstance().token});
-        } catch (Exception ex) {
+        } catch (HttpRequestException ex) {
+            
             Console.WriteLine(ex.Message);
+            error = true;
         }
+        catch (Exception ex) { }
+
+        if (error)
+        {
+            var box = MessageBoxManager.GetMessageBoxStandard("Info", "Erreur réseau lors de l'ajout du salarié", ButtonEnum.Ok);
+            var result = await box.ShowAsync();
+        } else
+        {
+            var box = MessageBoxManager.GetMessageBoxStandard("Info", "Salarié ajouté avec succès", ButtonEnum.Ok);
+            var result = await box.ShowAsync();
+        }
+
     }
 
 }

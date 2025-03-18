@@ -10,7 +10,6 @@ using System.Threading.Tasks;
 using Avalonia.Collections;
 using Avalonia.Controls;
 using Bloc4_GUI.Models;
-using Bloc4_GUI.placeholder;
 using Bloc4_GUI.Services;
 using Bloc4_GUI.Views;
 using DynamicData;
@@ -20,6 +19,9 @@ using Avalonia.Controls.Mixins;
 using ReactiveUI;
 using Splat;
 using Bloc4_GUI.DTO;
+using DynamicData.Kernel;
+using System.Net.Http;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Bloc4_GUI.ViewModels;
 
@@ -35,9 +37,19 @@ public class SalarieViewModel : ReactiveObject, IRoutableViewModel
         public string UrlPathSegment { get; } = "Salaries";
         private string _selectedService;
 
-        //Utilisé lorsqu'une cellule du tableau est en cours de modification, 
-        //permets de revenir à l'état initial lors d'une erreur de validation
-        public Salarie currentCellState { get; set; }
+        public bool Connected
+        {
+            get => AuthService.Connected;
+        }
+
+        public bool NotConnected
+        {
+            get => !AuthService.Connected;
+        }
+
+    //Utilisé lorsqu'une cellule du tableau est en cours de modification, 
+    //permets de revenir à l'état initial lors d'une erreur de validation
+    public Salarie currentCellState { get; set; }
         private string _selectedSite;
         public string SelectedService {
             get => _selectedService;
@@ -338,18 +350,32 @@ public class SalarieViewModel : ReactiveObject, IRoutableViewModel
         var result = await box.ShowAsync();
 
         if (result == ButtonResult.Ok && editedSalaries.Count > 0) {
-            
+            var error = false;
+
             foreach (var salarie in editedSalaries) {
                 salarie.service = Services.Where(s => s.nom == salarie.service.nom).FirstOrDefault();
                 
                 var dto = new SalarieDTO(salarie);
-                
+
                 try {
                     _ = await ApiService.PutAsync<SalarieDTO>("Salaries/update", new {salaries = dto, token = AuthService.GetInstance().token});
-                } catch (Exception ex) {
+                } catch (HttpRequestException ex) {
                     Console.WriteLine(ex.Message);
-                }
+                    error = true;
+                } catch (Exception ex) { }
 
+
+            }
+
+            if (error)
+            {
+                box = MessageBoxManager.GetMessageBoxStandard("Info", "Erreur Réseau : Changements impossibles", ButtonEnum.Ok);
+                result = await box.ShowAsync();
+            }
+            else
+            {
+                box = MessageBoxManager.GetMessageBoxStandard("Info", "Changements réussits", ButtonEnum.Ok);
+                result = await box.ShowAsync();
             }
         }
  
@@ -445,14 +471,26 @@ public class SalarieViewModel : ReactiveObject, IRoutableViewModel
     public async void DeleteSalarie(Salarie item) {
         var box = MessageBoxManager.GetMessageBoxStandard("Attention!", "Cette opération entraine des changements en base de données, assurez vous qu'ils soient conforme à vos attentes.\nConfirmer?", ButtonEnum.OkAbort);
         var result = await box.ShowAsync();
-        
+
+        var error = false;
         
         if(item != null && result == ButtonResult.Ok) {
             try {
                 _ = await ApiService.DeleteAsync<Salarie>("Salaries/delete/" + item.id);
 
-            } catch (Exception ex) {
+            } catch (HttpRequestException ex) {
+                error = true;
+            }
 
+            if(error)
+            {
+                box = MessageBoxManager.GetMessageBoxStandard("Info", "Erreur Réseau : Suppression impossible", ButtonEnum.Ok);
+                result = await box.ShowAsync();
+                return;
+            } else
+            {
+                box = MessageBoxManager.GetMessageBoxStandard("Info", "Suppression réussite", ButtonEnum.Ok);
+                result = await box.ShowAsync();
             }
 
 

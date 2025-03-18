@@ -4,7 +4,6 @@ using Avalonia.Controls;
 using Avalonia.ReactiveUI;
 using Bloc4_GUI.DTO;
 using Bloc4_GUI.Models;
-using Bloc4_GUI.placeholder;
 using Bloc4_GUI.Services;
 using Bloc4_GUI.Views;
 using MsBox.Avalonia;
@@ -18,6 +17,8 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reactive;
 using System.Threading.Tasks;
+using DynamicData.Kernel;
+using System.Net.Http;
 
 
 namespace Bloc4_GUI.ViewModels;
@@ -35,14 +36,21 @@ public class SiteViewModel :  ReactiveObject, IRoutableViewModel {
         get => _nameInput;
         set => this.RaiseAndSetIfChanged(ref _nameInput, value);
     }
-    
+
+    public bool Connected
+    {
+        get => AuthService.Connected;
+    }
+
+    public bool NotConnected
+    {
+        get => !AuthService.Connected;
+    }
+
     public ObservableCollection<Site> BaseSites { get; set; }
     public ObservableCollection<Site> Sites { get; set; }
     public ObservableCollection<Site> PageSites { get; set; }
     public AvaloniaDictionary<int, Site> SiteToBeDeleted { get; set; }
-
-
-    
     public ReactiveCommand<Unit, Unit> FilterCommand { get; }
     public ReactiveCommand<Unit, Unit> ResetFilterCommand { get; }
     public ReactiveCommand<Unit, Task> ConfirmChangesCommand { get; }
@@ -210,6 +218,7 @@ public class SiteViewModel :  ReactiveObject, IRoutableViewModel {
 
         var box = MessageBoxManager.GetMessageBoxStandard("Attention!", "Cette opération entraine des changements en base de données, assurez vous qu'ils soient conforme à vos attentes.\nConfirmer?", ButtonEnum.OkAbort);
         var result = await box.ShowAsync();
+        var error = false;
 
         if (result == ButtonResult.Ok) {
             foreach (var site in editedSite) {
@@ -218,11 +227,27 @@ public class SiteViewModel :  ReactiveObject, IRoutableViewModel {
 
                 try {
                     _ = await ApiService.PutAsync<SiteDTO>("Sites/update", new {site = dto, token = AuthService.GetInstance().token});
-                } catch (Exception ex) {
+                } catch (HttpRequestException ex) {
                     Console.WriteLine(ex.Message);
+                    error = true;
                 }
+                catch (Exception ex) { }
             }
+
+
+            if (error)
+            {
+                box = MessageBoxManager.GetMessageBoxStandard("Info", "Erreur Réseau : Changements impossibles", ButtonEnum.Ok);
+                result = await box.ShowAsync();
+            }
+            else
+            {
+                box = MessageBoxManager.GetMessageBoxStandard("Info", "Changements réussits", ButtonEnum.Ok);
+                result = await box.ShowAsync();
+            }
+
         }
+
     }
 
 
@@ -274,16 +299,30 @@ public class SiteViewModel :  ReactiveObject, IRoutableViewModel {
     public async void DeleteSite(Site item) {
         var box = MessageBoxManager.GetMessageBoxStandard("Attention!", "Vous êtes sur le point d'annuler tous vos changements.\nConfirmer?", ButtonEnum.OkAbort);
         var result = await box.ShowAsync();
-        
+
+        var error = false;
         
         if(item != null && result == ButtonResult.Ok) {
             try {
                 _ = await ApiService.DeleteAsync<Site>("Sites/delete/" + item.id);
-            } catch (Exception ex) {
+            } catch (HttpRequestException ex) {
+                error = true;
+            }
+            catch (Exception ex) { }
 
+            if (error)
+            {
+                box = MessageBoxManager.GetMessageBoxStandard("Info", "Erreur Réseau : Suppression impossible", ButtonEnum.Ok);
+                result = await box.ShowAsync();
+                return;
+            }
+            else
+            {
+                box = MessageBoxManager.GetMessageBoxStandard("Info", "Suppression réussite", ButtonEnum.Ok);
+                result = await box.ShowAsync();
             }
 
-            for(int i = 0; i < Sites.Count; i++) {
+            for (int i = 0; i < Sites.Count; i++) {
                 if (Sites[i].id == item.id) {
                     Sites.RemoveAt(i);
                     updatePagesIndex();

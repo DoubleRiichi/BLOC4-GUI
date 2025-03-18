@@ -17,11 +17,12 @@
 
         <StackPanel Margin="5,5"
                     Orientation="Horizontal" Spacing="12"
-                    HorizontalAlignment="Center">
+                    HorizontalAlignment="Center"
+					IsVisible="{Binding Connected}">
 
-            <Button Content="Ajouter" Command="{Binding OpenAddServiceCommand}"/>
-            <Button Content="Confirmer" Command="{Binding ConfirmChangesCommand}"/>
-            <Button Content="Annuler"   Command="{Binding CancelChangesCommand}"/>
+            <Button Content="Ajouter"   Command="{Binding OpenAddServiceCommand}" IsVisible="{Binding Connected}"/>
+            <Button Content="Confirmer" Command="{Binding ConfirmChangesCommand}" IsVisible="{Binding Connected}"/>
+            <Button Content="Annuler"   Command="{Binding ResetFilterCommand}"    IsVisible="{Binding Connected}"/>
         </StackPanel>
 
         <StackPanel Margin="5,5"
@@ -42,7 +43,7 @@
                 <DataGrid 
             ItemsSource="{Binding Services, Mode=TwoWay}" 
             AutoGenerateColumns="False" 
-            IsReadOnly="False" 
+            IsReadOnly="{Binding NotConnected}" 
             GridLinesVisibility="All" 
             BorderThickness="1" 
             BorderBrush="Gray"
@@ -85,7 +86,7 @@
                         </DataGridTemplateColumn.CellEditingTemplate>
                     </DataGridTemplateColumn>
                     
-                    <DataGridTemplateColumn Header="Suppression">
+                    <DataGridTemplateColumn Header="Suppression" IsVisible="{Binding Connected}">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
                                 <Button Name="deleteButton" Content="X" Click="DeleteButton_Click"  VerticalAlignment="Center" HorizontalAlignment="Center"/>         

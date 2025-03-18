@@ -10,7 +10,6 @@ public static class ValidatorService {
         string pattern = @"^0[1-5]\d{8}$";
 
         return Regex.IsMatch(Landline.Replace(" ", ""), pattern);
-
     }
 
     public static bool isValidMobilePhoneNumber(string PhoneNumber) {
@@ -30,7 +29,7 @@ public static class ValidatorService {
 
 
     public static bool isValidName(string Name) {
-
+        // Entre 2 et 50 caractères, avec apostrophe, tiret..
         string pattern = @"^[A-Za-zÀ-ÿà-ÿ-' ]{2,50}$";
 
         return Regex.IsMatch(Name.Replace(" ", ""), pattern);

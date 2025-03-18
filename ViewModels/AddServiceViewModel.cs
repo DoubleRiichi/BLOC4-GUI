@@ -1,8 +1,6 @@
-using Bloc4_GUI.placeholder;
 using ReactiveUI;
 using System.Collections.ObjectModel;
 using System.Reactive;
-using Bloc4_GUI.placeholder;
 using Bloc4_GUI.Models;
 using Bloc4_GUI.Services;
 using DynamicData;
@@ -12,6 +10,7 @@ using MsBox.Avalonia.Enums;
 using System.Threading.Tasks;
 using Bloc4_GUI.DTO;
 using System;
+using System.Net.Http;
 
 namespace Bloc4_GUI.ViewModels;
 
@@ -88,11 +87,26 @@ public class AddServiceViewModel : ReactiveObject
             site = SelectedSite            
         });
 
+        var error = false;
+
         try {
             await ApiService.PostAsync<ServiceDTO>("Services/create", new {services = dto, token=AuthService.GetInstance().token});
-        } catch (Exception ex) {
-            
+        } catch (HttpRequestException ex) {
+            error = true;
         }
+        catch (Exception ex) { }
+
+        if (error)
+        {
+           var box = MessageBoxManager.GetMessageBoxStandard("Info", "Erreur lors de l'ajout du site.", ButtonEnum.Ok);
+           var result = await box.ShowAsync();
+        }
+        else
+        {
+            var box = MessageBoxManager.GetMessageBoxStandard("Info", "Service ajouté avec succès.", ButtonEnum.Ok);
+            var result = await box.ShowAsync();
+        }
+
 
 
     }

@@ -3,3 +3,4 @@ bin/**
 obj/**
 placeholder/**
 /.vs/Bloc4-GUI
+.vs/**

@@ -42,8 +42,10 @@ public static class ApiService {
 
         var response = await _httpClient.PostAsync(endpoint, content);
         response.EnsureSuccessStatusCode();
-        var jsonResponse = await response.Content.ReadAsStringAsync();
+        var jsonResponse = await response.Content.ReadAsStringAsync();  
+ 
         return JsonSerializer.Deserialize<T>(jsonResponse);
+
     }
 
 
